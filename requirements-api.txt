@@ -1,0 +1,64 @@
+# DocuMed AI API Dependencies
+# ============================
+# Install with: pip install -r requirements-api.txt
+# This file contains dependencies for the FastAPI backend layer
+
+# =============================================================================
+# FastAPI Core
+# =============================================================================
+
+# FastAPI framework for building APIs
+fastapi>=0.109.0
+
+# ASGI server for running FastAPI applications
+uvicorn[standard]>=0.27.0
+
+# For handling file uploads in FastAPI
+python-multipart>=0.0.6
+
+# =============================================================================
+# Authentication & Security
+# =============================================================================
+
+# JWT token generation and validation
+python-jose[cryptography]>=3.3.0
+
+# Password hashing with bcrypt
+passlib[bcrypt]>=1.7.4
+
+# =============================================================================
+# Background Tasks & Queue
+# =============================================================================
+
+# Distributed task queue for async job processing
+celery>=5.3.4
+
+# Redis client for job queue and caching
+redis>=5.0.1
+
+# =============================================================================
+# WebSocket Support
+# =============================================================================
+
+# WebSocket support for real-time progress updates
+websockets>=12.0
+
+# =============================================================================
+# Rate Limiting
+# =============================================================================
+
+# Rate limiting middleware for FastAPI
+slowapi>=0.1.9
+
+# =============================================================================
+# Additional Utilities
+# =============================================================================
+
+# Async file operations
+aiofiles>=23.2.1
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# System and process utilities (for health checks)
+psutil>=5.9.0
