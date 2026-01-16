@@ -1,0 +1,82 @@
+# DocuMed AI Core Dependencies
+# ============================
+# Install with: pip install -r requirements.txt
+
+# =============================================================================
+# Core Dependencies
+# =============================================================================
+
+# Whisper for audio transcription (OpenAI's model)
+# Using the original openai-whisper package
+openai-whisper>=20231117
+
+# LangChain for LLM orchestration
+langchain>=0.3.0
+langchain-ollama>=0.2.0
+langchain-core>=0.3.0
+
+# Pydantic for data validation and settings management
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# =============================================================================
+# Speaker Diarization (Phase 1)
+# =============================================================================
+
+# Pyannote for speaker diarization ("who spoke when")
+# Requires HuggingFace token for model access
+# Get token at: https://huggingface.co/settings/tokens
+# Accept model license at: https://huggingface.co/pyannote/speaker-diarization-3.1
+pyannote.audio>=3.1.0
+
+# =============================================================================
+# Audio Processing
+# =============================================================================
+
+# FFmpeg-python for audio manipulation (requires FFmpeg installed)
+# Note: You need to install FFmpeg separately:
+#   - macOS: brew install ffmpeg
+#   - Ubuntu: sudo apt install ffmpeg
+#   - Windows: Download from ffmpeg.org
+
+# =============================================================================
+# Security & Encryption (Phase 6 - HIPAA Compliance)
+# =============================================================================
+
+# Cryptography for AES-256 encryption of PHI data
+cryptography>=41.0.0
+
+# =============================================================================
+# Token Counting & Context Management (Phase 5)
+# =============================================================================
+
+# Tiktoken for accurate token counting (OpenAI's tokenizer)
+tiktoken>=0.5.0
+
+# =============================================================================
+# Development Dependencies (optional)
+# =============================================================================
+
+# Uncomment for development:
+# pytest>=7.0.0
+# pytest-asyncio>=0.21.0
+# black>=23.0.0
+# isort>=5.12.0
+# mypy>=1.0.0
+
+# =============================================================================
+# Notes
+# =============================================================================
+# 
+# System Requirements:
+# - Python 3.10+
+# - FFmpeg (for audio processing)
+# - Ollama running locally (for LLM inference)
+#
+# To install Ollama:
+# - Visit https://ollama.ai
+# - Run: ollama pull llama3.2
+#
+# GPU Support (optional but recommended):
+# - CUDA for NVIDIA GPUs: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# - The whisper model will automatically use GPU if available
