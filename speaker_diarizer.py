@@ -16,7 +16,7 @@ HIPAA Compliance:
 - No audio data leaves the system
 - Speaker diarization operates on audio features only
 
-Author: DocuMed AI
+Author: MedScribe AI
 License: MIT
 """
 

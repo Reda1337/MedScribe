@@ -1,5 +1,5 @@
 """
-SOAP Note Generator for DocuMed AI
+SOAP Note Generator for MedScribe AI
 ==================================
 
 This module converts medical transcriptions into structured SOAP notes

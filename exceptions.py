@@ -1,5 +1,5 @@
 """
-Custom Exceptions for DocuMed AI
+Custom Exceptions for MedScribe AI
 ================================
 
 This module defines a hierarchy of custom exceptions that:
@@ -10,7 +10,7 @@ This module defines a hierarchy of custom exceptions that:
 4. **Support APIs**: Map cleanly to HTTP status codes (future)
 
 Exception Hierarchy:
-    DocuMedError (base)
+    MedScribeError (base)
     ├── AudioError
     │   ├── AudioFileNotFoundError
     │   ├── UnsupportedAudioFormatError
@@ -25,17 +25,17 @@ Exception Hierarchy:
 from typing import Optional
 
 
-class DocuMedError(Exception):
+class MedScribeError(Exception):
     """
-    Base exception for all DocuMed errors.
+    Base exception for all MedScribe errors.
     
     All custom exceptions inherit from this, allowing code to catch
-    all DocuMed-related errors with a single except clause:
+    all MedScribe-related errors with a single except clause:
     
         try:
             process_audio(file)
-        except DocuMedError as e:
-            logger.error(f"DocuMed error: {e}")
+        except MedScribeError as e:
+            logger.error(f"MedScribe error: {e}")
     
     Attributes:
         message: Human-readable error description
@@ -69,7 +69,7 @@ class DocuMedError(Exception):
 # Audio-Related Errors
 # =============================================================================
 
-class AudioError(DocuMedError):
+class AudioError(MedScribeError):
     """Base class for audio-related errors."""
     pass
 
@@ -121,7 +121,7 @@ class AudioTooLongError(AudioError):
 # Transcription-Related Errors
 # =============================================================================
 
-class TranscriptionError(DocuMedError):
+class TranscriptionError(MedScribeError):
     """Base class for transcription errors."""
     pass
 
@@ -156,7 +156,7 @@ class TranscriptionFailedError(TranscriptionError):
 # Generation-Related Errors
 # =============================================================================
 
-class GenerationError(DocuMedError):
+class GenerationError(MedScribeError):
     """Base class for SOAP generation errors."""
     pass
 
@@ -206,7 +206,7 @@ class SOAPGenerationError(GenerationError):
 # Configuration Errors
 # =============================================================================
 
-class ConfigurationError(DocuMedError):
+class ConfigurationError(MedScribeError):
     """Raised when there's a configuration problem."""
     
     def __init__(self, setting_name: str, issue: str):

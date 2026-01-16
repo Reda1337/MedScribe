@@ -1,5 +1,5 @@
 """
-Configuration Management for DocuMed AI
+Configuration Management for MedScribe AI
 ========================================
 
 This module handles all application configuration using the Settings pattern
@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     """
     Application settings loaded from environment variables.
     
-    Environment variables are prefixed with DOCUMED_ to avoid conflicts.
-    Example: DOCUMED_OLLAMA_MODEL=llama3.2
+    Environment variables are prefixed with MedScribe_ to avoid conflicts.
+    Example: MedScribe_OLLAMA_MODEL=llama3.2
     
     Priority order (highest to lowest):
     1. Environment variables
@@ -305,10 +305,10 @@ class Settings(BaseSettings):
     
     class Config:
         """Pydantic configuration for Settings."""
-        env_prefix = "DOCUMED_"  # All env vars start with DOCUMED_
+        env_prefix = "MedScribe_"  # All env vars start with MedScribe_
         env_file = ".env"  # Load from .env file if present
         env_file_encoding = "utf-8"
-        case_sensitive = False  # DOCUMED_WHISPER_MODEL = documed_whisper_model
+        case_sensitive = False  # MedScribe_WHISPER_MODEL = MedScribe_whisper_model
 
 
 @lru_cache()

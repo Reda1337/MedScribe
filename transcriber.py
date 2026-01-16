@@ -1,5 +1,5 @@
 """
-Transcription Service for DocuMed AI
+Transcription Service for MedScribe AI
 ====================================
 
 This module handles audio-to-text conversion using OpenAI's Whisper model.

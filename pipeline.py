@@ -1,5 +1,5 @@
 """
-Processing Pipeline for DocuMed AI
+Processing Pipeline for MedScribe AI
 ==================================
 
 This module provides the main orchestration layer that combines
@@ -48,7 +48,7 @@ from soap_generator import (
     OllamaSOAPGenerator,
     create_soap_generator,
 )
-from exceptions import DocuMedError
+from exceptions import MedScribeError
 
 
 # Set up module logger
@@ -64,7 +64,7 @@ class MedicalDocumentationPipeline:
     """
     Main pipeline for processing medical audio into SOAP notes.
     
-    This class is the primary entry point for using DocuMed AI.
+    This class is the primary entry point for using MedScribe AI.
     It orchestrates the transcription and SOAP generation services.
     
     Design Principles:
@@ -191,7 +191,7 @@ class MedicalDocumentationPipeline:
                 f"{result.processing_time_seconds:.1f}s"
             )
             
-        except DocuMedError as e:
+        except MedScribeError as e:
             # Known errors - we have structured information
             result.status = ProcessingStatus.FAILED
             result.error_message = e.message
@@ -419,7 +419,7 @@ class MedicalDocumentationPipeline:
                 f"{result.processing_time_seconds:.1f}s"
             )
 
-        except DocuMedError as e:
+        except MedScribeError as e:
             result.status = ProcessingStatus.FAILED
             result.error_message = e.message
             result.completed_at = datetime.now()
@@ -582,7 +582,7 @@ def save_result_to_file(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     
-    base_name = f"documed_{result.id}"
+    base_name = f"MedScribe_{result.id}"
     saved_files = {}
     
     # Save full result as JSON
@@ -635,6 +635,6 @@ def quick_process(audio_path: str) -> SOAPNote:
     result = pipeline.process(audio_path)
     
     if result.status == ProcessingStatus.FAILED:
-        raise DocuMedError(result.error_message or "Processing failed")
+        raise MedScribeError(result.error_message or "Processing failed")
     
     return result.soap_note

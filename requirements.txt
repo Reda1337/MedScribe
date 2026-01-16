@@ -1,4 +1,4 @@
-# DocuMed AI Core Dependencies
+# MedScribe AI Core Dependencies
 # ============================
 # Install with: pip install -r requirements.txt
 

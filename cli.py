@@ -1,5 +1,5 @@
 """
-Command Line Interface for DocuMed AI
+Command Line Interface for MedScribe AI
 =====================================
 
 This module provides the command-line interface for processing medical
@@ -8,16 +8,16 @@ audio files into SOAP notes.
 Usage:
 ------
     # Process a single file
-    python -m documed_core audio.mp3
+    python -m MedScribe_core audio.mp3
     
     # Process with options
-    python -m documed_core audio.mp3 --output ./results --verbose
+    python -m MedScribe_core audio.mp3 --output ./results --verbose
     
     # Transcription only (no SOAP generation)
-    python -m documed_core audio.mp3 --transcribe-only
+    python -m MedScribe_core audio.mp3 --transcribe-only
     
     # Process text directly
-    python -m documed_core --text "Patient presents with..."
+    python -m MedScribe_core --text "Patient presents with..."
 
 CLI Design Principles:
 ---------------------
@@ -36,7 +36,7 @@ from typing import Optional
 from pipeline import MedicalDocumentationPipeline, save_result_to_file
 from models import ProcessingStatus
 from config import get_settings
-from exceptions import DocuMedError
+from exceptions import MedScribeError
 
 
 # ANSI colors for terminal output
@@ -87,9 +87,9 @@ def create_parser() -> argparse.ArgumentParser:
     This defines all CLI options and their help text.
     """
     parser = argparse.ArgumentParser(
-        prog="documed",
+        prog="MedScribe",
         description="Convert medical audio consultations to SOAP notes",
-        epilog="Example: python -m documed_core consultation.mp3 --output ./notes",
+        epilog="Example: python -m MedScribe_core consultation.mp3 --output ./notes",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
@@ -243,9 +243,9 @@ def main(args: Optional[list[str]] = None) -> int:
         # This is important because get_settings() uses @lru_cache
         import os
         if parsed_args.whisper_model:
-            os.environ["DOCUMED_WHISPER_MODEL"] = parsed_args.whisper_model
+            os.environ["MedScribe_WHISPER_MODEL"] = parsed_args.whisper_model
         if parsed_args.ollama_model:
-            os.environ["DOCUMED_OLLAMA_MODEL"] = parsed_args.ollama_model
+            os.environ["MedScribe_OLLAMA_MODEL"] = parsed_args.ollama_model
         
         # Build settings with any overrides
         settings = get_settings()
@@ -333,7 +333,7 @@ def main(args: Optional[list[str]] = None) -> int:
         
         return 0
         
-    except DocuMedError as e:
+    except MedScribeError as e:
         print(colorize(f"\n❌ Error: {e.message}", Colors.RED))
         if parsed_args.verbose and e.details:
             print(colorize(f"   Details: {e.details}", Colors.YELLOW))

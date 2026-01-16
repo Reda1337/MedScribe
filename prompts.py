@@ -1,5 +1,5 @@
 """
-Medical Prompts for DocuMed AI - Production Version
+Medical Prompts for MedScribe AI - Production Version
 ===================================================
 
 This module contains production-grade prompts for professional medical SOAP note generation.
