@@ -1,5 +1,5 @@
 """
-Celery Tasks for DocuMed AI Background Processing
+Celery Tasks for MedScribe AI Background Processing
 =================================================
 
 This module contains Celery tasks for handling async background jobs:
@@ -20,7 +20,7 @@ settings = get_settings()
 
 # Create Celery app
 celery_app = Celery(
-    "documed",
+    "MedScribe",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend
 )

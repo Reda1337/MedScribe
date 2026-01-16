@@ -1,5 +1,5 @@
 """
-Domain Models for DocuMed AI
+Domain Models for MedScribe AI
 ============================
 
 This module defines the core data structures used throughout the application.

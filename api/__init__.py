@@ -1,5 +1,5 @@
 """
-DocuMed AI API Package
+MedScribe AI API Package
 FastAPI-based REST API for medical documentation processing.
 """
 

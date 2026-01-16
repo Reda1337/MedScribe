@@ -7,6 +7,6 @@ Will be implemented in Phase 2.
 """
 
 # TODO: Implement in Phase 2
-# - Create EXCEPTION_STATUS_MAP for DocuMed exceptions
+# - Create EXCEPTION_STATUS_MAP for MedScribe exceptions
 # - Implement error_handler_middleware function
 # - Map exceptions to appropriate HTTP status codes

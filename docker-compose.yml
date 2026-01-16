@@ -4,7 +4,7 @@ services:
   # Redis service for Celery broker and job queue
   redis:
     image: redis:7-alpine
-    container_name: documed-redis
+    container_name: MedScribe-redis
     ports:
       - "6379:6379"
     volumes:
@@ -20,7 +20,7 @@ services:
   # FastAPI application
   api:
     build: .
-    container_name: documed-api
+    container_name: MedScribe-api
     ports:
       - "8000:8000"
     environment:
@@ -35,14 +35,14 @@ services:
         condition: service_healthy
     volumes:
       - ./output:/app/output
-      - ./temp:/tmp/documed
+      - ./temp:/tmp/MedScribe
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     restart: unless-stopped
 
   # Celery worker for background tasks
   celery:
     build: .
-    container_name: documed-celery
+    container_name: MedScribe-celery
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -55,7 +55,7 @@ services:
         condition: service_healthy
     volumes:
       - ./output:/app/output
-      - ./temp:/tmp/documed
+      - ./temp:/tmp/MedScribe
     command: celery -A tasks worker --loglevel=info
     restart: unless-stopped
 

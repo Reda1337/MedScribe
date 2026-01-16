@@ -1,4 +1,4 @@
-# DocuMed AI API Dependencies
+# MedScribe AI API Dependencies
 # ============================
 # Install with: pip install -r requirements-api.txt
 # This file contains dependencies for the FastAPI backend layer
