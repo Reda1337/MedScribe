@@ -638,3 +638,28 @@ def quick_process(audio_path: str) -> SOAPNote:
         raise MedScribeError(result.error_message or "Processing failed")
     
     return result.soap_note
+
+
+def create_pipeline(
+    settings: Optional[Settings] = None
+) -> MedicalDocumentationPipeline:
+    """
+    Factory function to create a configured pipeline instance.
+    
+    This is the recommended way to create a pipeline for API usage,
+    as it ensures proper initialization with settings.
+    
+    Args:
+        settings: Optional custom settings. Uses default if not provided.
+        
+    Returns:
+        MedicalDocumentationPipeline: Configured pipeline instance
+        
+    Example:
+        pipeline = create_pipeline()
+        result = await pipeline.aprocess("audio.mp3")
+    """
+    if settings is None:
+        settings = get_settings()
+    
+    return MedicalDocumentationPipeline(settings=settings)
