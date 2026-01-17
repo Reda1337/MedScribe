@@ -302,6 +302,132 @@ class Settings(BaseSettings):
         default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         description="Python logging format string"
     )
+
+    # =================================================================
+    # API Configuration (Phase 2)
+    # =================================================================
+    api_host: str = Field(
+        default="0.0.0.0",
+        description="Host to bind the API server"
+    )
+    
+    api_port: int = Field(
+        default=8000,
+        description="Port for the API server"
+    )
+    
+    api_workers: int = Field(
+        default=4,
+        description="Number of API worker processes"
+    )
+    
+    api_debug: bool = Field(
+        default=False,
+        description="Enable debug mode for API (exposes error details)"
+    )
+
+    # =================================================================
+    # Security / JWT Configuration
+    # =================================================================
+    jwt_secret_key: str = Field(
+        default="change-me-in-production-use-strong-random-key",
+        description="Secret key for JWT token signing. CHANGE IN PRODUCTION!"
+    )
+    
+    jwt_algorithm: str = Field(
+        default="HS256",
+        description="Algorithm for JWT token signing"
+    )
+    
+    jwt_access_token_expire_minutes: int = Field(
+        default=30,
+        description="Access token expiration time in minutes"
+    )
+    
+    jwt_refresh_token_expire_days: int = Field(
+        default=7,
+        description="Refresh token expiration time in days"
+    )
+
+    # =================================================================
+    # CORS Configuration
+    # =================================================================
+    cors_origins: list = Field(
+        default=["http://localhost:3000", "http://localhost:8000"],
+        description="Allowed CORS origins"
+    )
+    
+    cors_allow_credentials: bool = Field(
+        default=True,
+        description="Allow credentials in CORS requests"
+    )
+
+    # =================================================================
+    # Redis Configuration
+    # =================================================================
+    redis_host: str = Field(
+        default="localhost",
+        description="Redis server hostname"
+    )
+    
+    redis_port: int = Field(
+        default=6379,
+        description="Redis server port"
+    )
+    
+    redis_db: int = Field(
+        default=0,
+        description="Redis database number"
+    )
+    
+    redis_password: str = Field(
+        default="",
+        description="Redis password (empty for no auth)"
+    )
+
+    # =================================================================
+    # Celery Configuration
+    # =================================================================
+    celery_broker_url: str = Field(
+        default="redis://localhost:6379/0",
+        description="Celery broker URL"
+    )
+    
+    celery_result_backend: str = Field(
+        default="redis://localhost:6379/0",
+        description="Celery result backend URL"
+    )
+
+    # =================================================================
+    # Rate Limiting
+    # =================================================================
+    rate_limit_per_minute: int = Field(
+        default=60,
+        description="Rate limit per minute for unauthenticated requests"
+    )
+    
+    rate_limit_authenticated: int = Field(
+        default=120,
+        description="Rate limit per minute for authenticated requests"
+    )
+
+    # =================================================================
+    # File Upload Configuration
+    # =================================================================
+    max_upload_size_mb: int = Field(
+        default=100,
+        description="Maximum file upload size in MB"
+    )
+    
+    allowed_audio_formats: list = Field(
+        default=[".mp3", ".wav", ".m4a", ".flac"],
+        description="Allowed audio file extensions for upload"
+    )
+    
+    temp_file_dir: str = Field(
+        default="/tmp/MedScribe",
+        description="Temporary directory for uploaded files"
+    )
     
     class Config:
         """Pydantic configuration for Settings."""
