@@ -118,6 +118,9 @@ def check_ollama(pipeline: MedicalDocumentationPipeline, settings: Settings) -> 
     """
     Check Ollama LLM connectivity and model availability.
 
+    This performs a lightweight HTTP check to Ollama's API instead of running
+    full LLM inference, making health checks fast (<2s instead of 8-62s).
+
     Args:
         pipeline: Pipeline instance with SOAP generator
         settings: Application settings
@@ -127,41 +130,60 @@ def check_ollama(pipeline: MedicalDocumentationPipeline, settings: Settings) -> 
     """
     try:
         import time
+        import requests
         start_time = time.time()
 
-        # Access the LLM to trigger lazy initialization
-        # Use a lightweight check instead of full _test_connection
-        soap_generator = pipeline.soap_generator
-
-        # Try to invoke with a minimal prompt
-        response = soap_generator.llm.invoke("test")
-        latency_ms = (time.time() - start_time) * 1000
-
-        return ServiceCheckResult(
-            status=ServiceStatus.HEALTHY,
-            message=f"Model '{settings.ollama_model}' available",
-            latency_ms=round(latency_ms, 2)
+        # Use Ollama's /api/tags endpoint for lightweight model availability check
+        # This is much faster than running full inference (llm.invoke)
+        response = requests.get(
+            f"{settings.ollama_base_url}/api/tags",
+            timeout=2  # 2 second timeout
         )
-    except Exception as e:
-        error_msg = str(e).lower()
-        logger.warning(f"Ollama health check failed: {e}")
 
-        # Determine if it's a connection issue or model issue
-        if "connection" in error_msg or "refused" in error_msg:
-            return ServiceCheckResult(
-                status=ServiceStatus.UNHEALTHY,
-                message=f"Cannot connect to Ollama at {settings.ollama_base_url}"
-            )
-        elif "not found" in error_msg or "pull" in error_msg:
-            return ServiceCheckResult(
-                status=ServiceStatus.UNHEALTHY,
-                message=f"Model '{settings.ollama_model}' not found. Run: ollama pull {settings.ollama_model}"
-            )
+        if response.status_code == 200:
+            data = response.json()
+            models = data.get("models", [])
+            model_names = [m.get("name", "").split(":")[0] for m in models]  # Extract base name
+
+            # Check if configured model exists (check base name, e.g., "qwen3" from "qwen3:14b")
+            configured_model_base = settings.ollama_model.split(":")[0]
+            model_exists = any(configured_model_base in name for name in model_names)
+
+            if model_exists:
+                latency_ms = (time.time() - start_time) * 1000
+                return ServiceCheckResult(
+                    status=ServiceStatus.HEALTHY,
+                    message=f"Model '{settings.ollama_model}' available",
+                    latency_ms=round(latency_ms, 2)
+                )
+            else:
+                return ServiceCheckResult(
+                    status=ServiceStatus.UNHEALTHY,
+                    message=f"Model '{settings.ollama_model}' not found. Available: {', '.join(model_names)}. Run: ollama pull {settings.ollama_model}"
+                )
         else:
             return ServiceCheckResult(
                 status=ServiceStatus.UNHEALTHY,
-                message=f"Error: {str(e)}"
+                message=f"Ollama API returned status {response.status_code}"
             )
+
+    except requests.exceptions.Timeout:
+        return ServiceCheckResult(
+            status=ServiceStatus.UNHEALTHY,
+            message=f"Ollama connection timeout (2s) at {settings.ollama_base_url}"
+        )
+    except requests.exceptions.ConnectionError:
+        logger.warning(f"Cannot connect to Ollama at {settings.ollama_base_url}")
+        return ServiceCheckResult(
+            status=ServiceStatus.UNHEALTHY,
+            message=f"Cannot connect to Ollama at {settings.ollama_base_url}"
+        )
+    except Exception as e:
+        logger.warning(f"Ollama health check failed: {e}")
+        return ServiceCheckResult(
+            status=ServiceStatus.UNHEALTHY,
+            message=f"Error: {str(e)}"
+        )
 
 
 def check_whisper(pipeline: MedicalDocumentationPipeline, settings: Settings) -> ServiceCheckResult:

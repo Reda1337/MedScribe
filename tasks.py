@@ -42,6 +42,9 @@ def progress_callback(job_id: str):
     """
     Create progress callback for pipeline.
 
+    The callback receives granular progress updates from the pipeline
+    and publishes them to Redis for WebSocket streaming.
+
     Args:
         job_id: Job identifier
 
@@ -50,17 +53,16 @@ def progress_callback(job_id: str):
     """
     job_manager = JobManager()
 
-    def callback(status: ProcessingStatus, message: str):
-        # Map ProcessingStatus to progress percentage
-        progress_map = {
-            ProcessingStatus.PENDING: 0,
-            ProcessingStatus.TRANSCRIBING: 25,
-            ProcessingStatus.GENERATING: 75,
-            ProcessingStatus.COMPLETED: 100,
-            ProcessingStatus.FAILED: 0
-        }
+    def callback(status: ProcessingStatus, message: str, progress: int):
+        """
+        Progress callback with granular progress support.
 
-        progress = progress_map.get(status, 0)
+        Args:
+            status: Processing status enum
+            message: Human-readable progress message
+            progress: Progress percentage (0-100)
+        """
+        # Use the provided progress value directly (no more static mapping!)
         job_manager.set_job_progress(job_id, progress, status.value)
 
     return callback
