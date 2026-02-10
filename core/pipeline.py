@@ -38,12 +38,12 @@ from models import (
     SOAPNote,
     AudioPath,
 )
-from transcriber import (
+from core.transcriber import (
     TranscriberProtocol,
     WhisperTranscriber,
     create_transcriber,
 )
-from soap_generator import (
+from core.soap_generator import (
     SOAPGeneratorProtocol,
     OllamaSOAPGenerator,
     create_soap_generator,

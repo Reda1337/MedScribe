@@ -17,7 +17,7 @@ from api.middleware.error_handler import error_handler_middleware
 from api.middleware.rate_limiter import setup_rate_limiting
 from api.routes import health, jobs, auth, websocket
 from config import get_settings
-from pipeline import create_pipeline
+from core.pipeline import create_pipeline
 
 
 # Global application state - stores pipeline and other singletons

@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from config import Settings, get_settings
 from api.dependencies import get_pipeline, get_job_manager
-from pipeline import MedicalDocumentationPipeline
+from core.pipeline import MedicalDocumentationPipeline
 from api.services.job_manager import JobManager
 
 

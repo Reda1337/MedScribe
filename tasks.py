@@ -15,7 +15,7 @@ from pathlib import Path
 import asyncio
 
 from config import get_settings
-from pipeline import create_pipeline
+from core.pipeline import create_pipeline
 from api.services.job_manager import JobManager
 from api.utils.file_handler import FileHandler
 from models import ProcessingStatus

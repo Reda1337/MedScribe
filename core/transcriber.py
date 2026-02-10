@@ -42,7 +42,7 @@ from exceptions import (
 )
 
 # Phase 1: Import speaker diarization
-from speaker_diarizer import (
+from core.speaker_diarizer import (
     create_speaker_diarizer,
     SpeakerDiarizerProtocol,
     merge_diarization_with_transcription,

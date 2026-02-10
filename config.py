@@ -104,7 +104,7 @@ class Settings(BaseSettings):
         Get token at: https://huggingface.co/settings/tokens
         Accept license at: https://huggingface.co/pyannote/speaker-diarization-3.1
 
-        Can also be set via HUGGINGFACE_TOKEN environment variable.
+        Set via MedScribe_HUGGINGFACE_TOKEN environment variable.
         """
     )
 

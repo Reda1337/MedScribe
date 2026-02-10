@@ -73,7 +73,7 @@ class PyannnoteSpeakerDiarizer:
     1. Install: pip install pyannote.audio>=3.1.0
     2. Get HuggingFace token: https://huggingface.co/settings/tokens
     3. Accept model license: https://huggingface.co/pyannote/speaker-diarization-3.1
-    4. Set environment variable: HUGGINGFACE_TOKEN=your_token_here
+    4. Set environment variable: MedScribe_HUGGINGFACE_TOKEN=your_token_here
 
     Usage:
         diarizer = PyannnoteSpeakerDiarizer(
@@ -99,20 +99,19 @@ class PyannnoteSpeakerDiarizer:
             model_name: HuggingFace model identifier
             min_speakers: Minimum number of speakers (None = auto-detect)
             max_speakers: Maximum number of speakers (None = auto-detect)
-            auth_token: HuggingFace authentication token (or set HUGGINGFACE_TOKEN env var)
+            auth_token: HuggingFace authentication token (passed from config)
             device: Device to run on ("cpu" or "cuda")
         """
         self.model_name = model_name
         self.min_speakers = min_speakers
         self.max_speakers = max_speakers
         self.device = device
+        self.auth_token = auth_token
 
-        # Get auth token from parameter or environment
-        self.auth_token = auth_token or os.getenv("HUGGINGFACE_TOKEN")
         if not self.auth_token:
             logger.warning(
-                "No HuggingFace token found. Set HUGGINGFACE_TOKEN environment variable "
-                "or pass auth_token parameter. Get token at: https://huggingface.co/settings/tokens"
+                "No HuggingFace token found. Set MedScribe_HUGGINGFACE_TOKEN in .env file. "
+                "Get token at: https://huggingface.co/settings/tokens"
             )
 
         # Lazy loading - pipeline initialized on first use

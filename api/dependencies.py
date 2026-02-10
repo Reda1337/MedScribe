@@ -13,7 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError
 
 from config import get_settings
-from pipeline import MedicalDocumentationPipeline
+from core.pipeline import MedicalDocumentationPipeline
 
 # Security scheme for JWT Bearer tokens
 security = HTTPBearer(auto_error=False)

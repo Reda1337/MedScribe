@@ -33,7 +33,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from pipeline import MedicalDocumentationPipeline, save_result_to_file
+from core.pipeline import MedicalDocumentationPipeline, save_result_to_file
 from models import ProcessingStatus
 from config import get_settings
 from exceptions import MedScribeError
