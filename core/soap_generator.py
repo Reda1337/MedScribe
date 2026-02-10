@@ -39,7 +39,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 from config import Settings, get_settings
 from models import SOAPNote, TranscriptionResult
-from prompts import get_professional_soap_prompt, get_system_prompt
+from core.prompts import get_professional_soap_prompt, get_system_prompt
 from exceptions import (
     OllamaConnectionError,
     ModelNotFoundError,

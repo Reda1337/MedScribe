@@ -24,10 +24,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - MedScribe_REDIS_HOST=redis
+      - MedScribe_REDIS_PORT=6379
+      - MedScribe_CELERY_BROKER_URL=redis://redis:6379/0
+      - MedScribe_CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
       - .env
     depends_on:
@@ -36,7 +36,8 @@ services:
     volumes:
       - ./output:/app/output
       - ./temp:/tmp/MedScribe
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+      - .:/app  # Mount code for development
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
 
   # Celery worker for background tasks
@@ -44,10 +45,10 @@ services:
     build: .
     container_name: MedScribe-celery
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - MedScribe_REDIS_HOST=redis
+      - MedScribe_REDIS_PORT=6379
+      - MedScribe_CELERY_BROKER_URL=redis://redis:6379/0
+      - MedScribe_CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
       - .env
     depends_on:
@@ -56,7 +57,8 @@ services:
     volumes:
       - ./output:/app/output
       - ./temp:/tmp/MedScribe
-    command: celery -A tasks worker --loglevel=info
+      - .:/app  # Mount code for development
+    command: celery -A tasks worker --loglevel=info --pool=solo
     restart: unless-stopped
 
 volumes:

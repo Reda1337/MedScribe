@@ -38,12 +38,12 @@ from models import (
     SOAPNote,
     AudioPath,
 )
-from transcriber import (
+from core.transcriber import (
     TranscriberProtocol,
     WhisperTranscriber,
     create_transcriber,
 )
-from soap_generator import (
+from core.soap_generator import (
     SOAPGeneratorProtocol,
     OllamaSOAPGenerator,
     create_soap_generator,
@@ -56,8 +56,49 @@ logger = logging.getLogger(__name__)
 
 
 # Type aliases for progress callbacks
-ProgressCallback = Callable[[ProcessingStatus, str], None]
-AsyncProgressCallback = Callable[[ProcessingStatus, str], Awaitable[None]]
+ProgressCallback = Callable[[ProcessingStatus, str, int], None]
+AsyncProgressCallback = Callable[[ProcessingStatus, str, int], Awaitable[None]]
+
+
+class _ProgressHelper:
+    """
+    Internal helper for calculating granular progress percentages.
+
+    Keeps progress math clean and separate from pipeline orchestration logic.
+    Progress is calculated based on stage weights that sum to 100%.
+    """
+
+    # Stage weights (must sum to 100)
+    TRANSCRIPTION_WEIGHT = 50  # Transcription: 0-50%
+    GENERATION_WEIGHT = 50     # SOAP generation: 50-100%
+
+    @staticmethod
+    def transcription_progress(stage_percent: int) -> int:
+        """
+        Calculate overall progress for transcription stage.
+
+        Args:
+            stage_percent: Progress within transcription stage (0-100)
+
+        Returns:
+            Overall progress percentage (0-50)
+        """
+        return stage_percent * _ProgressHelper.TRANSCRIPTION_WEIGHT // 100
+
+    @staticmethod
+    def generation_progress(stage_percent: int) -> int:
+        """
+        Calculate overall progress for SOAP generation stage.
+
+        Args:
+            stage_percent: Progress within generation stage (0-100)
+
+        Returns:
+            Overall progress percentage (50-100)
+        """
+        base = _ProgressHelper.TRANSCRIPTION_WEIGHT
+        offset = stage_percent * _ProgressHelper.GENERATION_WEIGHT // 100
+        return base + offset
 
 
 class MedicalDocumentationPipeline:
@@ -183,7 +224,8 @@ class MedicalDocumentationPipeline:
             self._notify_progress(
                 progress_callback,
                 ProcessingStatus.COMPLETED,
-                f"Processing complete in {result.processing_time_seconds:.1f}s"
+                f"Processing complete in {result.processing_time_seconds:.1f}s",
+                100
             )
             
             logger.info(
@@ -200,21 +242,23 @@ class MedicalDocumentationPipeline:
             self._notify_progress(
                 progress_callback,
                 ProcessingStatus.FAILED,
-                f"Error: {e.message}"
+                f"Error: {e.message}",
+                0
             )
-            
+
             logger.error(f"[{job_id}] Pipeline failed: {e.message}")
-            
+
         except Exception as e:
             # Unexpected errors
             result.status = ProcessingStatus.FAILED
             result.error_message = f"Unexpected error: {str(e)}"
             result.completed_at = datetime.now()
-            
+
             self._notify_progress(
                 progress_callback,
                 ProcessingStatus.FAILED,
-                f"Unexpected error: {str(e)}"
+                f"Unexpected error: {str(e)}",
+                0
             )
             
             logger.exception(f"[{job_id}] Unexpected error in pipeline")
@@ -228,30 +272,48 @@ class MedicalDocumentationPipeline:
     ) -> ProcessingResult:
         """
         Run the transcription stage.
-        
+
         This is a separate method for:
         1. Cleaner code organization
         2. Easier testing of individual stages
         3. Potential for parallel processing (future)
         """
+        # Starting transcription - 0% of stage
         self._notify_progress(
             progress_callback,
             ProcessingStatus.TRANSCRIBING,
-            "Transcribing audio..."
+            "Starting transcription...",
+            _ProgressHelper.transcription_progress(0)
         )
-        
+
         result.status = ProcessingStatus.TRANSCRIBING
-        
+
         logger.info(f"[{result.id}] Starting transcription")
-        
+
+        # Mid-transcription progress - 50% of stage
+        self._notify_progress(
+            progress_callback,
+            ProcessingStatus.TRANSCRIBING,
+            "Processing audio with Whisper...",
+            _ProgressHelper.transcription_progress(50)
+        )
+
         transcription = self.transcriber.transcribe(result.audio_file_path)
         result.transcription = transcription
-        
+
+        # Transcription complete - 100% of stage
+        self._notify_progress(
+            progress_callback,
+            ProcessingStatus.TRANSCRIBING,
+            "Transcription complete",
+            _ProgressHelper.transcription_progress(100)
+        )
+
         logger.info(
             f"[{result.id}] Transcription complete: "
             f"{len(transcription.text)} chars, {transcription.duration_seconds:.1f}s"
         )
-        
+
         return result
     
     def _run_soap_generation(
@@ -270,29 +332,55 @@ class MedicalDocumentationPipeline:
         """
         if not result.transcription:
             raise ValueError("Cannot generate SOAP without transcription")
-        
+
+        # Starting SOAP generation - 0% of stage
         self._notify_progress(
             progress_callback,
             ProcessingStatus.GENERATING,
-            "Generating SOAP note..."
+            "Starting SOAP generation...",
+            _ProgressHelper.generation_progress(0)
         )
-        
+
         result.status = ProcessingStatus.GENERATING
-        
+
         # Extract detected language, default to English if not available
         detected_language = result.transcription.language or "en"
-        
+
         logger.info(
             f"[{result.id}] Starting SOAP generation "
             f"(detected language: {detected_language})"
         )
-        
+
+        # Mid-generation progress - 30% of stage
+        self._notify_progress(
+            progress_callback,
+            ProcessingStatus.GENERATING,
+            "Analyzing transcription...",
+            _ProgressHelper.generation_progress(30)
+        )
+
+        # Before LLM call - 60% of stage
+        self._notify_progress(
+            progress_callback,
+            ProcessingStatus.GENERATING,
+            "Generating SOAP note with LLM...",
+            _ProgressHelper.generation_progress(60)
+        )
+
         # Pass detected language to generator for multi-language support
         soap_note = self.soap_generator.generate(
             result.transcription.text,
             language=detected_language
         )
         result.soap_note = soap_note
+
+        # SOAP generation complete - 100% of stage
+        self._notify_progress(
+            progress_callback,
+            ProcessingStatus.GENERATING,
+            "SOAP note generated",
+            _ProgressHelper.generation_progress(100)
+        )
         
         logger.info(f"[{result.id}] SOAP note generated in {detected_language}")
         
@@ -302,17 +390,25 @@ class MedicalDocumentationPipeline:
         self,
         callback: Optional[ProgressCallback],
         status: ProcessingStatus,
-        message: str
+        message: str,
+        progress: int = 0
     ) -> None:
         """
         Notify progress callback if provided.
-        
+
         This is a helper to safely call the callback without
-        crashing if it fails.
+        crashing if it fails. Exception isolation ensures
+        callback errors don't break the pipeline.
+
+        Args:
+            callback: Progress callback function
+            status: Current processing status
+            message: Human-readable progress message
+            progress: Progress percentage (0-100), defaults to 0
         """
         if callback:
             try:
-                callback(status, message)
+                callback(status, message, progress)
             except Exception as e:
                 logger.warning(f"Progress callback failed: {e}")
     
@@ -411,7 +507,8 @@ class MedicalDocumentationPipeline:
             await self._anotify_progress(
                 progress_callback,
                 ProcessingStatus.COMPLETED,
-                f"Processing complete in {result.processing_time_seconds:.1f}s"
+                f"Processing complete in {result.processing_time_seconds:.1f}s",
+                100
             )
 
             logger.info(
@@ -427,7 +524,8 @@ class MedicalDocumentationPipeline:
             await self._anotify_progress(
                 progress_callback,
                 ProcessingStatus.FAILED,
-                f"Error: {e.message}"
+                f"Error: {e.message}",
+                0
             )
 
             logger.error(f"[{job_id}] Async pipeline failed: {e.message}")
@@ -440,7 +538,8 @@ class MedicalDocumentationPipeline:
             await self._anotify_progress(
                 progress_callback,
                 ProcessingStatus.FAILED,
-                f"Unexpected error: {str(e)}"
+                f"Unexpected error: {str(e)}",
+                0
             )
 
             logger.exception(f"[{job_id}] Unexpected error in async pipeline")
@@ -458,19 +557,37 @@ class MedicalDocumentationPipeline:
         Uses asyncio.to_thread internally to run the blocking
         Whisper model without freezing the event loop.
         """
+        # Starting transcription - 0% of stage
         await self._anotify_progress(
             progress_callback,
             ProcessingStatus.TRANSCRIBING,
-            "Transcribing audio..."
+            "Starting transcription...",
+            _ProgressHelper.transcription_progress(0)
         )
 
         result.status = ProcessingStatus.TRANSCRIBING
 
         logger.info(f"[{result.id}] Starting async transcription")
 
+        # Mid-transcription progress - 50% of stage
+        await self._anotify_progress(
+            progress_callback,
+            ProcessingStatus.TRANSCRIBING,
+            "Processing audio with Whisper...",
+            _ProgressHelper.transcription_progress(50)
+        )
+
         # Use the async transcribe method
         transcription = await self.transcriber.atranscribe(result.audio_file_path)
         result.transcription = transcription
+
+        # Transcription complete - 100% of stage
+        await self._anotify_progress(
+            progress_callback,
+            ProcessingStatus.TRANSCRIBING,
+            "Transcription complete",
+            _ProgressHelper.transcription_progress(100)
+        )
 
         logger.info(
             f"[{result.id}] Async transcription complete: "
@@ -493,10 +610,12 @@ class MedicalDocumentationPipeline:
         if not result.transcription:
             raise ValueError("Cannot generate SOAP without transcription")
 
+        # Starting SOAP generation - 0% of stage
         await self._anotify_progress(
             progress_callback,
             ProcessingStatus.GENERATING,
-            "Generating SOAP note..."
+            "Starting SOAP generation...",
+            _ProgressHelper.generation_progress(0)
         )
 
         result.status = ProcessingStatus.GENERATING
@@ -508,12 +627,36 @@ class MedicalDocumentationPipeline:
             f"(detected language: {detected_language})"
         )
 
+        # Mid-generation progress - 30% of stage
+        await self._anotify_progress(
+            progress_callback,
+            ProcessingStatus.GENERATING,
+            "Analyzing transcription...",
+            _ProgressHelper.generation_progress(30)
+        )
+
+        # Before LLM call - 60% of stage
+        await self._anotify_progress(
+            progress_callback,
+            ProcessingStatus.GENERATING,
+            "Generating SOAP note with LLM...",
+            _ProgressHelper.generation_progress(60)
+        )
+
         # Use the async generate method
         soap_note = await self.soap_generator.agenerate(
             result.transcription.text,
             language=detected_language
         )
         result.soap_note = soap_note
+
+        # SOAP generation complete - 100% of stage
+        await self._anotify_progress(
+            progress_callback,
+            ProcessingStatus.GENERATING,
+            "SOAP note generated",
+            _ProgressHelper.generation_progress(100)
+        )
 
         logger.info(f"[{result.id}] Async SOAP note generated in {detected_language}")
 
@@ -523,18 +666,25 @@ class MedicalDocumentationPipeline:
         self,
         callback: Optional[Union[ProgressCallback, AsyncProgressCallback]],
         status: ProcessingStatus,
-        message: str
+        message: str,
+        progress: int = 0
     ) -> None:
         """
         Notify progress callback if provided (supports sync and async callbacks).
+
+        Args:
+            callback: Progress callback function (sync or async)
+            status: Current processing status
+            message: Human-readable progress message
+            progress: Progress percentage (0-100), defaults to 0
         """
         if callback:
             try:
                 # Check if callback is a coroutine function
                 if asyncio.iscoroutinefunction(callback):
-                    await callback(status, message)
+                    await callback(status, message, progress)
                 else:
-                    callback(status, message)
+                    callback(status, message, progress)
             except Exception as e:
                 logger.warning(f"Progress callback failed: {e}")
 
@@ -638,3 +788,28 @@ def quick_process(audio_path: str) -> SOAPNote:
         raise MedScribeError(result.error_message or "Processing failed")
     
     return result.soap_note
+
+
+def create_pipeline(
+    settings: Optional[Settings] = None
+) -> MedicalDocumentationPipeline:
+    """
+    Factory function to create a configured pipeline instance.
+    
+    This is the recommended way to create a pipeline for API usage,
+    as it ensures proper initialization with settings.
+    
+    Args:
+        settings: Optional custom settings. Uses default if not provided.
+        
+    Returns:
+        MedicalDocumentationPipeline: Configured pipeline instance
+        
+    Example:
+        pipeline = create_pipeline()
+        result = await pipeline.aprocess("audio.mp3")
+    """
+    if settings is None:
+        settings = get_settings()
+    
+    return MedicalDocumentationPipeline(settings=settings)
