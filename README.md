@@ -22,8 +22,8 @@ Medical conversations in, clinical documentation out.
 
 ```bash
 # Clone and install
-git clone <your-repo-url>
-cd files
+git clone <the repo> foldername
+cd foldername
 pip install -r requirements.txt
 
 # Get an Ollama model
